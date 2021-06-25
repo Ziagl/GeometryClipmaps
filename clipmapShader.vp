@@ -1,0 +1,45 @@
+uniform float heightBlend;
+uniform vec2 arCenter;
+uniform vec2 blendRgnScale;
+uniform vec2 blendRgnOffset;
+uniform vec2 clipScale;
+uniform vec2 clipBottomLeftMem;
+uniform vec2 clipScaleParent;
+uniform vec2 clipBottomLeftMemParent;
+uniform float blendRegions;
+
+varying vec2 out_coord;
+varying vec2 out_coordParent;
+varying float out_blend;
+varying float out_fog;
+varying vec4 out_color;
+varying vec2 out_pos;
+varying float out_height;
+varying float out_blendRegions;
+
+void main(){
+	vec2 dist = ( blendRgnOffset - abs( gl_Vertex.xz - arCenter ) ) * blendRgnScale;
+	out_blend = clamp( min(dist.y,dist.x), 0.0, 1.0) * heightBlend;
+
+	float h = mix( gl_Vertex.w, gl_Vertex.y, out_blend );
+  
+	out_coord = ( gl_Vertex.xz - clipBottomLeftMem ) * clipScale;
+	out_pos = gl_Vertex.xz * 0.00001;
+	out_coordParent = ( gl_Vertex.xz - clipBottomLeftMemParent ) * clipScaleParent;
+  
+	//VertexColor
+	out_color = gl_Color;
+	
+	// show blending regions
+	out_blendRegions = blendRegions;
+	out_color = vec4( 0.0, 0.0 , 1.0 - out_blend,1.0 );
+
+	//show height
+	out_height =  gl_Vertex.y * 0.00001;
+	//out_color = vec4( height, height, height, 1.0 );
+  
+	vec4 res = gl_ModelViewProjectionMatrix * vec4( gl_Vertex.x, h, gl_Vertex.z, 1.0);
+	out_fog = res.z * 0.0000005;
+	clamp(out_fog, 0.0, 1.0);
+	gl_Position = res;
+}
